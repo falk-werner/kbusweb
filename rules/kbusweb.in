@@ -1,0 +1,12 @@
+## SECTION=project_specific
+
+config KBUSWEB
+	bool
+	prompt "kbus-web"
+	select HOST_CMAKE
+	select DAL
+	select LIBDBUSKBUSCOMMON
+	select LIBMICROHTTPD
+	select NLOHMANN_JSON
+	help
+	  FIXME
