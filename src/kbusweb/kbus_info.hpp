@@ -2,6 +2,9 @@
 #define KBUSWEB_KBUS_INFO_HPP
 
 #include "kbusweb/kbus_status.hpp"
+#include "kbusweb/terminal_info.hpp"
+
+#include <vector>
 
 namespace kbusweb
 {
@@ -16,6 +19,7 @@ public:
     kbus_info();
     ~kbus_info();
     kbus_status get_status();
+    std::vector<terminal_info> get_terminal_infos();
 };
 
 }

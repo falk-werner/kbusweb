@@ -36,8 +36,20 @@ int handle_root(MHD_Connection * connection)
 <head>
     <title>KBus Web</title>
     <style type="text/css">
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
         th {
+            padding-right: 5px;
+            padding-left: 5px;
             text-align: left;
+            background-color: #c0c0c0;
+        }
+        
+        td {
+            text-align: right;
         }
     </style>
     <script type="text/javascript">
@@ -56,6 +68,48 @@ int handle_root(MHD_Connection * connection)
         document.querySelector("#bitcount_do").textContent = status.BitCountDigitalOutput;
 
         document.querySelector("#write_bool").addEventListener("click", write_bool);
+
+        const terminals_resp = await fetch("/terminals");
+        const terminals = await terminals_resp.json();
+        let i = 0;
+        for(let terminal of terminals.terminals) {
+            i++;
+            const tr = document.createElement("tr");
+
+            let td = document.createElement("td");
+            td.textContent = i;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = terminal.Type;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = terminal.OffsetInputBits;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = terminal.OffsetOutputBits;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = terminal.SizeInputBits;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = terminal.SizeOutputBits;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = terminal.ChannelCount;
+            tr.appendChild(td);
+
+            td = document.createElement("td");
+            td.textContent = terminal.PiFormat;
+            tr.appendChild(td);
+
+            document.querySelector('#terminals').appendChild(tr);
+        }
     }
 
     async function write_bool() {
@@ -96,6 +150,23 @@ int handle_root(MHD_Connection * connection)
     <div>
         <input name="write_bool" id="write_bool" type="button" value="Write" />
     </div>
+
+    <h2>Terminals</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>Offset Input Bits</th>
+                <th>Offset Output Bits</th>
+                <th>Size Input Bits</th>
+                <th>Size Output Bits</th>
+                <th>Channel Count</th>
+                <th>Pi Format</th>
+            </tr>
+        <thread>
+        <tbody id="terminals"></tbody>
+    </table>
 </body>
 </html>)";
 
@@ -117,7 +188,33 @@ int handle_status(MHD_Connection * connection, kbus & bus)
     data["BitCountDigitalOutput"] = status.bit_count_digital_output;
     auto text = data.dump();
 
-    return respond(connection, text, "application/plain");
+    return respond(connection, text, "application/json");
+}
+
+int handle_terminals(MHD_Connection * connection, kbus & bus)
+{
+    auto const infos = bus.get_terminal_infos();
+
+    json terminals;
+    for(auto const & info: infos)
+    {
+        json terminal;
+        terminal["Type"] = info.type;
+        terminal["OffsetInputBits"] = info.offset_input_bits;
+        terminal["OffsetOutputBits"] = info.offset_output_bits;
+        terminal["SizeInputBits"] = info.size_input_bits;
+        terminal["SizeOutputBits"] = info.size_output_bits;
+        terminal["ChannelCount"] = info.channel_count;
+        terminal["PiFormat"] = info.pi_format;
+
+        terminals.push_back(terminal);
+    }
+
+    json data;
+    data["terminals"] = terminals;
+    auto text = data.dump();
+
+    return respond(connection, text, "application/json");
 }
 
 int handle_write_bool(MHD_Connection * connection, kbus & bus)
@@ -181,6 +278,10 @@ int handle_request(
         else if (0 == strcmp(url, "/status"))
         {
             return handle_status(connection, *bus);
+        }
+        else if (0 == strcmp(url, "/terminals"))
+        {
+            return handle_terminals(connection, *bus);
         }
         else if (0 == strcmp(url, "/write/bool"))
         {

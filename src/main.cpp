@@ -108,6 +108,7 @@ void run(uint16_t port)
 	kbus bus;
 	kbus_info info;
 	bus.set_status(info.get_status());
+	bus.set_terminal_infos(info.get_terminal_infos());
 
 	webserver web(port, &bus);
 

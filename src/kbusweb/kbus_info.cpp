@@ -3,6 +3,7 @@
 extern "C"
 {
 	#include <ldkc_kbus_information.h>
+    #include <ldkc_kbus_register_communication.h>
 }
 
 #include <stdexcept>
@@ -42,6 +43,44 @@ kbus_status kbus_info::get_status()
     retval.bit_count_digital_output = status.BitCountDigitalOutput;
 
     return retval;
+}
+
+std::vector<terminal_info> kbus_info::get_terminal_infos()
+{
+    ldkc_KbusInfo_TerminalInfo terminals[LDKC_KBUS_TERMINAL_COUNT_MAX];
+    size_t count = 0;
+    auto result = ldkc_KbusInfo_GetTerminalInfo(LDKC_KBUS_TERMINAL_COUNT_MAX, terminals, &count);
+    if (result != KbusInfo_Ok)
+    {
+        throw std::runtime_error("failed to get terminal info");
+    }
+
+    uint16_t terminal_types[LDKC_KBUS_TERMINAL_COUNT_MAX];
+    count = 0;
+    result = ldkc_KbusInfo_GetTerminalList(LDKC_KBUS_TERMINAL_COUNT_MAX, terminal_types, &count);
+    if (result != KbusInfo_Ok)
+    {
+        throw std::runtime_error("failed to get terminal info");
+    }
+
+    std::vector<terminal_info> infos;
+    for(size_t i = 0; i < count; i++)
+    {
+        terminal_info info;
+        info.type = terminal_types[i];
+
+        auto const & terminal = terminals[i];
+        info.offset_input_bits = terminal.OffsetInput_bits;
+        info.offset_output_bits = terminal.OffsetOutput_bits;
+        info.size_input_bits = terminal.SizeInput_bits;
+        info.size_output_bits = terminal.SizeOutput_bits;
+        info.channel_count = terminal.AdditionalInfo.ChannelCount;
+        info.pi_format = terminal.AdditionalInfo.PiFormat;
+
+        infos.emplace_back(info);
+    }
+
+    return infos;
 }
 
 }
