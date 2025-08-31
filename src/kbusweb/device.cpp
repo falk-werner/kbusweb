@@ -27,7 +27,7 @@ device::~device()
     adi_->CloseDevice(id_);
 }
 
-void device::push_kbus()
+bool device::push_kbus()
 {
     uint32_t retval = 0;
     auto const result = adi_->CallDeviceSpecificFunction("libpackbus_Push", &retval);
@@ -36,10 +36,7 @@ void device::push_kbus()
         throw std::runtime_error("failed to call device specific funcion");
     }
 
-    if (DAL_SUCCESS != retval)
-    {
-        throw std::runtime_error("failed to call device specific funcion");
-    }
+    return (DAL_SUCCESS == retval);
 }
 
 void device::write_start()

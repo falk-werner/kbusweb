@@ -18,7 +18,7 @@ class device
 public:
     device(tApplicationDeviceInterface * adi, tDeviceId id);
     ~device();
-    void push_kbus();
+    bool push_kbus();
     void write_start();
     void write_end();
     void write_bool(uint32_t offset, bool value);
